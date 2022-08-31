@@ -1,4 +1,21 @@
-[
+[{
+      "name":"DD Sports",
+      "icon":"https://image.winudf.com/v2/image1/ZGQuc3BvcnRzbGl2ZWNyaWNrZXR0dl9zY3JlZW5fMF8xNTQ5NTI3NTg4XzA0Nw/screen-0.jpg?fakeurl=1&type=.webp",
+      "link":"https://hammerhead-app-idtq8.ondigitalocean.app/autoq.php?c=DD_Sports",
+      "drm_scheme":"",
+      "drm_license_url":"",
+      "us_ag":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+      "refe":"https://hammerhead-app-idtq8.ondigitalocean.app/play.php?c=DD_Sports",
+      "orig":"",
+      "cook":"",
+      "source":"dd",
+      "channelLanguageId":1,
+      "lang":"Hindi",
+      "channelCategoryId":1,
+      "category":"Sports",
+      "visibility":"yes",
+      "channel_id":0
+   },
    {
       "name":"DD National",
       "icon":"ddnational.jpg",
