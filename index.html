@@ -1,60 +1,89 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>NexGenCoding</title>
-    <style>
-      html, body {
-        height: 100%;
-      }
-      body {
-        background-color: #fff;
-        background: radial-gradient(circle at center, #fff 0%, #f8f8f8 75%, #ebebeb 100%);
-        color: #222;
-        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
-        font-size: 1rem;
-        line-height: 1.5;
-        margin: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      main {
-        padding: 1rem;
-        text-align: center;
-      }
-      h1 {
-        font-size: 2.5rem;
-        line-height: 1.1;
-        margin: 0;
-      }
-      @media screen and (max-width: 480px) {
-        h1 {
-          font-size: 1.5rem;
+<head>
+  <meta charset="UTF-8" />
+  <title>Dash.js + Plyr ClearKey Example with XHR patch</title>
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+  <style>
+    body { background: #222; color: #eee; font-family: Arial, sans-serif; }
+    #log { height: 120px; overflow-y: auto; background: #111; padding: 10px; margin-top: 10px; font-size: 12px; font-family: monospace; }
+  </style>
+</head>
+<body>
+
+  <video id="video" controls crossorigin="anonymous" playsinline></video>
+
+  <div id="log"></div>
+
+  <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+
+  <script>
+    const manifestUrl = "https://sec-prod-mediacdn.pw.live/0f9e4d3b-e965-4d52-8e97-e3e59c85df23/master.mpd?URLPrefix=aHR0cHM6Ly9zZWMtcHJvZC1tZWRpYWNkbi5wdy5saXZlLzBmOWU0ZDNiLWU5NjUtNGQ1Mi04ZTk3LWUzZTU5Yzg1ZGYyMw&Expires=1748820579&KeyName=pw-prod-key&Signature=YO_L9VPBbGwJY62GQ6JzEl5sB1h-wH7Wm2YrcyRp93qH0PlzNcaIj3rbmyBHFxTicpeE7vrgnIkE5YN0DJh6DQ";
+
+    // --- Patch XMLHttpRequest.open to append query params to all requests ---
+    (function() {
+      const origOpen = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
+        try {
+          const queryIndex = manifestUrl.indexOf('?');
+          if (queryIndex !== -1) {
+            const queryString = manifestUrl.substring(queryIndex);
+            const requiredParams = ["URLPrefix", "Expires", "KeyName", "Signature"];
+            const hasAllParams = requiredParams.every(p => url.includes(p + "="));
+            if (!hasAllParams) {
+              if (url.indexOf('?') === -1) {
+                url += queryString;
+              } else {
+                url += '&' + queryString.substring(1);
+              }
+            }
+          }
+        } catch(e) {
+          console.warn("XHR patch error", e);
+        }
+        return origOpen.call(this, method, url, async, user, password);
+      };
+    })();
+
+    // --- Logging helper ---
+    function log(msg) {
+      const logEl = document.getElementById('log');
+      logEl.textContent += msg + "\n";
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(msg);
+    }
+
+    // --- Initialize dash.js player ---
+    const video = document.getElementById('video');
+    const dashPlayer = dashjs.MediaPlayer().create();
+    dashPlayer.initialize(video, manifestUrl, true);
+
+    // Setup ClearKey DRM
+    dashPlayer.setProtectionData({
+      "org.w3.clearkey": {
+        "clearkeys": {
+          "_axqz6m_v_FbEKBHSxgMMQ": "-4k_YM3vb5Cfo66Sl6EbqQ"
         }
       }
-      h1::after {
-        content: "";
-        background-color: #ffe800;
-        background: repeating-linear-gradient(45deg, #ffe800, #ffe800 0.5rem, #222 0.5rem, #222 1.0rem);
-        display: block;
-        height: 0.5rem;
-        margin-top: 1rem;
-      }
-      img {
-        max-width: 100%;
-        height: auto;
-      }
-      p {
-        margin: 1rem 0 0 0;
-      }
-    </style>
-  </head>
-  <body>
-    <main>
-      <h1>Welcome To NexGenCoding</h1>
-      <p>Our Website is Under Construction.</p>
-    </main>
-  </body>
+    });
+
+    // dash.js event listeners
+    dashPlayer.on("error", function(e) {
+      log([dash.js ERROR] ${e.error}: ${e.event ? e.event.message : ''});
+      if(e.event) console.error(e.event);
+    });
+    dashPlayer.on("manifestLoaded", () => log('[dash.js] Manifest loaded'));
+    dashPlayer.on("streamInitialized", () => log('[dash.js] Stream initialized'));
+    dashPlayer.on("fragmentLoadingStarted", (e) => log([dash.js] Loading fragment: ${e.request.url}));
+    dashPlayer.on("keySystemSelected", (e) => log([dash.js] Key system selected: ${e.keySystem}));
+    dashPlayer.on("protectionError", (e) => log([dash.js DRM ERROR] ${e.error}));
+
+    // --- Initialize Plyr ---
+    const player = new Plyr(video, {
+      controls: ['play', 'progress', 'mute', 'volume', 'fullscreen']
+    });
+  </script>
+
+</body>
 </html>
